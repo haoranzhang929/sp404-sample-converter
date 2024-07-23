@@ -36,9 +36,18 @@ jobs:
           name: electron-app
           path: dist/**
 
+      - name: Create a tag
+        id: tag
+        run: |
+          TAG_NAME="v1.0.0-${{ github.run_number }}"
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: dist/**/* # Upload all files in the dist directory
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
