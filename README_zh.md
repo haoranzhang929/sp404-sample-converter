@@ -7,6 +7,10 @@
 - [English](README.md)
 - [中文](README_zh.md)
 
+## 支持的平台
+
+目前，SP-404 MK2 采样转换器仅支持**macOS**。其他操作系统的支持正在开发中。我计划在未来发布 Windows 和 Linux 版本。敬请关注更新！
+
 ## 概述
 
 如果您在将采样和循环导入 SP-404 MK2 时遇到 `Unsupported File` 错误，那么这个应用程序将是您的救星！
