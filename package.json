@@ -6,7 +6,7 @@
   "scripts": {
     "start": "npm run build:css && electron .",
     "pack": "npm run build:css && electron-builder --dir",
-    "dist": "npm run build:css && electron-builder",
+    "dist": "npm run build:css && electron-builder --publish=never",
     "build:css": "tailwindcss build src/tailwind.css -o src/styles.css"
   },
   "build": {
