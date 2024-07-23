@@ -147,7 +147,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: "./dist/sp404-sample-converter Setup 1.0.0.exe"
+          asset_path: "./dist/sp404-sample-converter Setup 0.0.0.exe"
           asset_name: sp404-sample-converter-0.0.${{ github.run_number }}.exe
           asset_content_type: application/octet-stream
 
@@ -157,7 +157,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/sp404-sample-converter-1.0.0-arm64.dmg
+          asset_path: ./dist/sp404-sample-converter-0.0.0-arm64.dmg
           asset_name: sp404-sample-converter-0.0.${{ github.run_number }}.dmg
           asset_content_type: application/octet-stream
 
@@ -167,6 +167,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/sp404-sample-converter-1.0.0.AppImage
+          asset_path: ./dist/sp404-sample-converter-0.0.0.AppImage
           asset_name: sp404-sample-converter-0.0.${{ github.run_number }}.AppImage
           asset_content_type: application/octet-stream
