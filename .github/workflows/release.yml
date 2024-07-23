@@ -9,12 +9,10 @@ on:
       - main
 
 jobs:
-  build:
+  build-linux:
     runs-on: ubuntu-latest
-
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -30,27 +28,94 @@ jobs:
       - name: Build CSS
         run: npm run build:css
 
-      - name: Build Electron app
-        run: npm run dist
+      - name: Build Electron app for Linux
+        run: npm run dist -- --linux
 
       - name: Upload Release Assets
         uses: actions/upload-artifact@v3
         with:
-          name: electron-app
+          name: electron-app-linux
           path: dist/**
 
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-
+  build-windows:
+    runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Download build artifacts
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build CSS
+        run: npm run build:css
+
+      - name: Build Electron app for Windows
+        run: npm run dist -- --win
+
+      - name: Upload Release Assets
+        uses: actions/upload-artifact@v3
+        with:
+          name: electron-app-windows
+          path: dist/**
+
+  build-macos:
+    runs-on: macos-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build CSS
+        run: npm run build:css
+
+      - name: Build Electron app for macOS
+        run: npm run dist -- --mac
+
+      - name: Upload Release Assets
+        uses: actions/upload-artifact@v3
+        with:
+          name: electron-app-macos
+          path: dist/**
+
+  release:
+    needs: [build-linux, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download build artifacts (Linux)
         uses: actions/download-artifact@v3
         with:
-          name: electron-app
+          name: electron-app-linux
+          path: dist
+
+      - name: Download build artifacts (Windows)
+        uses: actions/download-artifact@v3
+        with:
+          name: electron-app-windows
+          path: dist
+
+      - name: Download build artifacts (macOS)
+        uses: actions/download-artifact@v3
+        with:
+          name: electron-app-macos
           path: dist
 
       - name: List files in dist directory
@@ -67,12 +132,32 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Release Asset
+      - name: Upload Release Asset (Windows)
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/sp404-sample-converter-1.0.0.AppImage
-          asset_name: sp404-sample-converter-1.0.0.AppImage
+          asset_path: ./dist/*.exe
+          asset_name: sp404-sample-converter-${{ github.run_number }}.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (macOS)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/*.dmg
+          asset_name: sp404-sample-converter-${{ github.run_number }}.dmg
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (Linux AppImage)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/*.AppImage
+          asset_name: sp404-sample-converter-${{ github.run_number }}.AppImage
           asset_content_type: application/octet-stream
