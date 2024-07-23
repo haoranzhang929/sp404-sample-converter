@@ -3,33 +3,121 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SP404 Sample Converter</title>
-    <link href="styles.css" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>SP404 MK2 Sample Converter</title>
     <style>
-      body {
-        padding-top: 20px;
+      #warning-message {
+        transform: translateY(100%);
+        opacity: 0;
+        transition: transform 0.3s ease, opacity 0.3s ease;
       }
-      .container {
-        max-width: 600px;
-      }
-      #output {
-        margin-top: 20px;
+      #warning-message.show {
+        transform: translateY(0);
+        opacity: 1;
       }
     </style>
   </head>
-  <body class="bg-gray-100">
-    <div class="container mx-auto p-4">
-      <h1 class="text-center text-2xl font-bold mb-4">SP404 Sample Converter</h1>
-      <div class="text-center">
-        <button id="select-dir" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-2">
+  <body class="bg-gray-100 min-h-screen flex flex-col">
+    <div class="container mx-auto p-6 flex-grow flex flex-col">
+      <h1 class="text-center text-3xl font-bold mb-8 text-gray-800">SP404 MK2 Sample Converter</h1>
+
+      <div class="flex justify-center space-x-4 mb-4">
+        <button
+          id="select-dir"
+          class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+        >
           Select Directory
         </button>
-        <button id="start-process" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mx-2">
+        <button
+          id="start-process"
+          class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+        >
           Start Processing
         </button>
+        <button
+          id="show-help"
+          class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
+        >
+          Help
+        </button>
       </div>
-      <div id="output" class="alert-info mt-3 p-2 rounded shadow bg-white">Select a directory to start.</div>
+
+      <div
+        id="output"
+        class="mt-4 p-6 rounded-lg shadow-md bg-white border border-gray-200 min-h-[150px] text-gray-500 flex items-center justify-center"
+      >
+        <p class="text-center">
+          Welcome to SP404 MK2 Sample Converter.<br />
+          Select a directory and click "Start Processing" to begin.
+        </p>
+      </div>
+
+      <!-- Help Modal -->
+      <div id="help-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl max-w-2xl w-full mx-4">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-gray-800">How to Use the SP-404 Sample Converter</h2>
+            <button id="close-help" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <p class="mb-4 text-gray-600">
+            This application helps you convert WAV files to the format supported by the SP-404 MK2 sampler. Follow these
+            steps to use the app:
+          </p>
+          <ol class="list-decimal list-inside mb-6 space-y-2 text-gray-700">
+            <li>
+              Click the "Select Directory" button to choose the folder containing the WAV files you want to convert.
+            </li>
+            <li>After selecting a directory, click the "Start Processing" button to begin the conversion process.</li>
+            <li>
+              The app will process all WAV files in the selected directory and its subdirectories, converting them to
+              16-bit, 48kHz format.
+            </li>
+            <li>Monitor the progress and any errors in the output area at the bottom of the page.</li>
+          </ol>
+          <p class="text-gray-600">
+            If you encounter any issues or need further assistance, please refer to the troubleshooting section in the
+            <a
+              href="https://github.com/haoranzhang929/sp404-sample-converter/blob/main/README.md"
+              target="_blank"
+              class="text-blue-500 hover:underline"
+              >README file</a
+            >
+            or
+            <a
+              href="https://github.com/haoranzhang929/sp404-sample-converter/issues"
+              target="_blank"
+              class="text-blue-500 hover:underline"
+              >submit an issue</a
+            >.
+          </p>
+        </div>
+      </div>
     </div>
+
+    <!-- Floating Warning Message -->
+    <div
+      id="warning-message"
+      class="fixed bottom-0 left-0 right-0 mb-4 mx-auto max-w-lg p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 rounded-lg shadow-lg"
+    >
+      <button id="close-warning" class="absolute top-2 right-2 text-yellow-700 hover:text-yellow-900">
+        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      <p class="font-bold">Warning!</p>
+      <p>This app will replace existing samples. Please backup your samples before processing.</p>
+    </div>
+
     <script src="renderer.js"></script>
   </body>
 </html>

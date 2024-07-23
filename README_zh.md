@@ -9,9 +9,9 @@
 
 ## 概述
 
-如果您在将样本和循环导入 SP-404 MK2 时遇到 `Unsupported File` 错误，那么这个应用程序将是您的救星！
+如果您在将采样和循环导入 SP-404 MK2 时遇到 `Unsupported File` 错误，那么这个应用程序将是您的救星！
 
-很多样本包和循环可能不符合 SP-404 MK2 所需的格式（16 位、48kHz），需要转换。这个 Electron 应用程序能自动帮您将 WAV 文件转换为正确的格式，省去手动转换的烦恼。
+很多采样包和循环可能不符合 SP-404 MK2 所需的格式（16 位、48kHz），需要转换。这个 Electron 应用程序能自动帮您将 WAV 文件转换为正确的格式，省去手动转换的烦恼。
 
 这个项目基于 [SP404WavConvertor](https://github.com/pkMinhas/SP404WavConvertor) 存储库，非常感谢 **pkMinhas** 的出色工作！
 

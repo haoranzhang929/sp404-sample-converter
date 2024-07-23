@@ -1,6 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const path = require("path");
-const fs = require("fs");
+const fs = require("fs").promises;
 const ffmpeg = require("fluent-ffmpeg");
 const os = require("os");
 const pathToFfmpeg = require("ffmpeg-static");
@@ -22,28 +22,17 @@ function createWindow() {
   });
 
   mainWindow.loadFile(path.join(__dirname, "index.html"));
-  mainWindow.on("close", (event) => {
-    app.quit();
-  });
 }
 
 app.on("ready", createWindow);
 
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
+  app.quit();
 });
 
 app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
-  }
-});
-
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
   }
 });
 
@@ -55,94 +44,73 @@ ipcMain.handle("select-directory", async () => {
   return result.filePaths;
 });
 
+// Helper function to process files
+async function processFile(filePath) {
+  return new Promise((resolve, reject) => {
+    ffmpeg.ffprobe(filePath, (err, probeData) => {
+      if (err) {
+        return reject(`[!!] Error probing ${path.basename(filePath)}: ${err.message}`);
+      }
+
+      const audioInfo = probeData.streams[0];
+      const codec_name = audioInfo.codec_name;
+      const sample_rate = audioInfo.sample_rate.toString();
+
+      if (codec_name === "pcm_s16le" && sample_rate === "48000") {
+        return resolve(`[+] ${path.basename(filePath)} already meets the requirements`);
+      }
+
+      const tempFile = path.join(os.tmpdir(), path.basename(filePath));
+
+      ffmpeg(filePath)
+        .output(tempFile)
+        .audioCodec("pcm_s16le")
+        .audioFrequency(48000)
+        .on("end", () => {
+          fs.rename(tempFile, filePath)
+            .then(() => resolve(`[+] Processed ${path.basename(filePath)}`))
+            .catch((renameErr) => reject(`[!!] Error renaming ${tempFile} to ${filePath}: ${renameErr.message}`));
+        })
+        .on("error", (convertErr) => reject(`[!!] Error converting ${path.basename(filePath)}: ${convertErr.message}`))
+        .run();
+    });
+  });
+}
+
 // IPC Handler to process the selected directory
 ipcMain.handle("process-directory", async (event, directory) => {
   let finalMessageArr = [];
 
-  function diveInto(directory) {
-    console.log(`Processing ${directory}`);
+  async function diveInto(dir) {
+    const files = await fs.readdir(dir);
+    const tasks = files.map(async (filename) => {
+      const filePath = path.join(dir, filename);
 
-    let processed = 0;
-    let skipped = 0;
-
-    fs.readdirSync(directory).forEach((filename) => {
-      const f = path.join(directory, filename);
-
-      if (fs.lstatSync(f).isDirectory()) {
-        diveInto(f);
-        return;
+      if ((await fs.stat(filePath)).isDirectory()) {
+        return diveInto(filePath);
       }
 
       if (filename.startsWith("._") || !filename.toLowerCase().endsWith(".wav")) {
-        return;
+        return; // Skip non-WAV files and Mac system files
       }
 
-      if (fs.lstatSync(f).isFile()) {
-        console.log(f);
-        try {
-          ffmpeg.ffprobe(f, (err, probeData) => {
-            if (err) {
-              console.error(`[!!] Error probing ${filename}: ${err.message}`);
-              skipped++;
-              finalMessageArr.push(`[!!] Error probing ${filename}: ${err.message}`);
-              return;
-            }
-
-            const audioInfo = probeData.streams[0];
-            const codec_name = audioInfo.codec_name;
-            const sample_rate = audioInfo.sample_rate.toString();
-            console.log(codec_name, sample_rate);
-
-            if (codec_name === "pcm_s16le" && sample_rate === "48000") {
-              console.log("Already meets requirement, skipping...");
-              skipped++;
-              return;
-            }
-
-            const tempFile = path.join(os.tmpdir(), filename);
-            ffmpeg(f)
-              .output(tempFile)
-              .audioCodec("pcm_s16le")
-              .audioFrequency(48000)
-              .on("end", () => {
-                try {
-                  fs.renameSync(tempFile, f);
-                  processed++;
-                  finalMessageArr.push(`[+] Processed ${filename}`);
-                  if (processed + skipped === fs.readdirSync(directory).length) {
-                    finalMessageArr.push(`${directory} - files processed: ${processed}, skipped: ${skipped}`);
-                  }
-                } catch (renameErr) {
-                  console.error(`[!!] Error renaming ${tempFile} to ${f}: ${renameErr.message}`);
-                  finalMessageArr.push(`[!!] Error renaming ${tempFile} to ${f}: ${renameErr.message}`);
-                  skipped++;
-                }
-              })
-              .on("error", (convertErr) => {
-                console.error(`[!!] Error converting ${filename}: ${convertErr.message}`);
-                finalMessageArr.push(`[!!] Error converting ${filename}: ${convertErr.message}`);
-                skipped++;
-                if (processed + skipped === fs.readdirSync(directory).length) {
-                  finalMessageArr.push(`${directory} - files processed: ${processed}, skipped: ${skipped}`);
-                }
-              })
-              .run();
-          });
-        } catch (e) {
-          console.error(`[!!] Some exception occurred while processing ${filename}: ${e.message}`);
-          finalMessageArr.push(`[!!] Some exception occurred while processing ${filename}: ${e.message}`);
-          skipped++;
-        }
+      try {
+        const message = await processFile(filePath);
+        finalMessageArr.push(message);
+      } catch (error) {
+        finalMessageArr.push(error);
       }
     });
+
+    await Promise.all(tasks);
   }
 
-  diveInto(directory);
+  try {
+    await diveInto(directory);
+  } catch (error) {
+    finalMessageArr.push(`[!!] Error processing directory: ${error.message}`);
+  }
 
-  // Wait for all processing to complete before sending final messages
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(finalMessageArr);
-    }, 3000); // Adjust timing as needed
-  });
+  finalMessageArr.push(`${directory} - Processing complete`);
+  return finalMessageArr;
 });
