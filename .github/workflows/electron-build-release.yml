@@ -19,7 +19,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "16" # Specify the Node.js version you need
+          node-version: "18"
 
       - name: Install dependencies
         run: npm install
@@ -41,4 +41,4 @@ jobs:
         with:
           files: dist/**/* # Upload all files in the dist directory
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.BUILDER }}
