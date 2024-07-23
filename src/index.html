@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SP404 Sample Converter</title>
+    <link href="styles.css" rel="stylesheet" />
+    <style>
+      body {
+        padding-top: 20px;
+      }
+      .container {
+        max-width: 600px;
+      }
+      #output {
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+      <h1 class="text-center text-2xl font-bold mb-4">SP404 Sample Converter</h1>
+      <div class="text-center">
+        <button id="select-dir" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-2">
+          Select Directory
+        </button>
+        <button id="start-process" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mx-2">
+          Start Processing
+        </button>
+      </div>
+      <div id="output" class="alert-info mt-3 p-2 rounded shadow bg-white">Select a directory to start.</div>
+    </div>
+    <script src="renderer.js"></script>
+  </body>
+</html>
