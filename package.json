@@ -4,9 +4,9 @@
   "description": "",
   "main": "src/main.js",
   "scripts": {
-    "start": "electron .",
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder",
+    "start": "npm run build:css && electron .",
+    "pack": "npm run build:css && electron-builder --dir",
+    "dist": "npm run build:css && electron-builder",
     "build:css": "tailwindcss build src/tailwind.css -o src/styles.css"
   },
   "build": {
@@ -19,7 +19,23 @@
       "src/**/*",
       "node_modules/**/*",
       "package.json",
-      "node_modules/fluent-ffmpeg/**/*"
+      "!src/**/*.test.js",
+      "!**/*.md",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!**/*.map",
+      "!src/tailwind.css",
+      "!src/tailwind.config.js",
+      "!src/postcss.config.js"
+    ],
+    "extraResources": [
+      {
+        "from": "assets/",
+        "to": "assets/",
+        "filter": [
+          "**/*"
+        ]
+      }
     ],
     "win": {
       "target": "nsis"

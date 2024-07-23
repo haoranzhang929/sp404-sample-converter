@@ -115,4 +115,4 @@ dist/
 # Other files
 index.js
 styles.css
-
+src/styles.css
