@@ -50,37 +50,53 @@ ipcMain.handle("select-directory", async () => {
 
 // Helper function to process files
 async function processFile(filePath) {
-  return new Promise((resolve, reject) => {
+  const tempFile = path.join(os.tmpdir(), path.basename(filePath));
+  let finalMessage = "";
+
+  try {
     // debug log
     console.log(`Processing file: ${filePath}`);
-    ffmpeg.ffprobe(filePath, (err, probeData) => {
-      if (err) {
-        return reject(`[!!] Error probing ${path.basename(filePath)}: ${err.message}`);
-      }
 
-      const audioInfo = probeData.streams[0];
-      const codec_name = audioInfo.codec_name;
-      const sample_rate = audioInfo.sample_rate.toString();
+    const probeData = await new Promise((resolve, reject) => {
+      ffmpeg.ffprobe(filePath, (err, data) => {
+        if (err) return reject(err);
+        resolve(data);
+      });
+    });
 
-      if (codec_name === "pcm_s16le" && sample_rate === "48000") {
-        return resolve(`[+] ${path.basename(filePath)} already meets the requirements`);
-      }
+    const audioInfo = probeData.streams[0];
+    const codec_name = audioInfo.codec_name;
+    const sample_rate = audioInfo.sample_rate.toString();
 
-      const tempFile = path.join(os.tmpdir(), path.basename(filePath));
+    if (codec_name === "pcm_s16le" && sample_rate === "48000") {
+      finalMessage = `[+] ${path.basename(filePath)} already meets the requirements`;
+      return finalMessage;
+    }
 
+    await new Promise((resolve, reject) => {
       ffmpeg(filePath)
         .output(tempFile)
         .audioCodec("pcm_s16le")
         .audioFrequency(48000)
-        .on("end", () => {
-          fs.rename(tempFile, filePath)
-            .then(() => resolve(`[+] Processed ${path.basename(filePath)}`))
-            .catch((renameErr) => reject(`[!!] Error renaming ${tempFile} to ${filePath}: ${renameErr.message}`));
-        })
-        .on("error", (convertErr) => reject(`[!!] Error converting ${path.basename(filePath)}: ${convertErr.message}`))
+        .on("end", () => resolve())
+        .on("error", (err) => reject(err))
         .run();
     });
-  });
+
+    await fs.rename(tempFile, filePath);
+    finalMessage = `[+] Processed ${path.basename(filePath)}`;
+  } catch (error) {
+    finalMessage = `[!!] Error processing ${path.basename(filePath)}: ${error.message}`;
+  } finally {
+    // Cleanup temporary file
+    try {
+      await fs.unlink(tempFile);
+    } catch (cleanupErr) {
+      console.error(`[!!] Error deleting temporary file ${tempFile}: ${cleanupErr.message}`);
+    }
+  }
+
+  return finalMessage;
 }
 
 // IPC Handler to process the selected directory
