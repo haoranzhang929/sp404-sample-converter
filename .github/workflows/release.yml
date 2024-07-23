@@ -31,6 +31,9 @@ jobs:
       - name: Build Electron app for Linux
         run: npm run dist -- --linux
 
+      - name: List files in dist directory (Linux)
+        run: ls -alh ./dist
+
       - name: Upload Release Assets
         uses: actions/upload-artifact@v3
         with:
@@ -59,6 +62,9 @@ jobs:
       - name: Build Electron app for Windows
         run: npm run dist -- --win
 
+      - name: List files in dist directory (Windows)
+        run: dir dist
+
       - name: Upload Release Assets
         uses: actions/upload-artifact@v3
         with:
@@ -86,6 +92,9 @@ jobs:
 
       - name: Build Electron app for macOS
         run: npm run dist -- --mac
+
+      - name: List files in dist directory (macOS)
+        run: ls -alh ./dist
 
       - name: Upload Release Assets
         uses: actions/upload-artifact@v3
@@ -138,7 +147,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/*.exe
+          asset_path: ./dist/sp404-sample-converter\ Setup\ 1.0.0.exe
           asset_name: sp404-sample-converter-${{ github.run_number }}.exe
           asset_content_type: application/octet-stream
 
@@ -148,7 +157,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/*.dmg
+          asset_path: ./dist/sp404-sample-converter-1.0.0-arm64.dmg
           asset_name: sp404-sample-converter-${{ github.run_number }}.dmg
           asset_content_type: application/octet-stream
 
@@ -158,6 +167,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/*.AppImage
+          asset_path: ./dist/sp404-sample-converter-1.0.0.AppImage
           asset_name: sp404-sample-converter-${{ github.run_number }}.AppImage
           asset_content_type: application/octet-stream
