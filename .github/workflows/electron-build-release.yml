@@ -43,11 +43,11 @@ jobs:
           git tag $TAG_NAME
           git push origin $TAG_NAME
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: dist/**/* # Upload all files in the dist directory
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
