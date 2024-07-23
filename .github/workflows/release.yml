@@ -53,6 +53,9 @@ jobs:
           name: electron-app
           path: dist
 
+      - name: List files in dist directory
+        run: ls -alh ./dist
+
       - name: Create release
         id: create_release
         uses: actions/create-release@v1
