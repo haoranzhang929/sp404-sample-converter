@@ -1,5 +1,3 @@
-const { ipcRenderer, shell } = require("electron");
-
 const selectDirButton = document.getElementById("select-dir");
 const startProcessButton = document.getElementById("start-process");
 const outputDiv = document.getElementById("output");
@@ -47,7 +45,7 @@ function updateOutput(message, type = "info") {
 
 selectDirButton.addEventListener("click", async () => {
   try {
-    const directories = await ipcRenderer.invoke("select-directory");
+    const directories = await window.electron.selectDirectory();
     if (directories.length > 0) {
       selectedDirectory = directories[0];
       updateOutput(`Selected directory: ${selectedDirectory}. Now click "Start Processing" to begin.`, "info");
@@ -68,7 +66,7 @@ startProcessButton.addEventListener("click", async () => {
   updateOutput("Processing started. Please wait while we process your files...", "info");
 
   try {
-    const result = await ipcRenderer.invoke("process-directory", selectedDirectory);
+    const result = await window.electron.processDirectory(selectedDirectory);
     updateOutput(result.join("<br>"), "success");
   } catch (error) {
     updateOutput(`Error processing directory: ${error.message}`, "error");
@@ -115,6 +113,6 @@ closeWarningButton.addEventListener("click", () => {
 helpModal.addEventListener("click", (event) => {
   if (event.target.tagName === "A") {
     event.preventDefault(); // Prevent default link behavior
-    shell.openExternal(event.target.href); // Open link in external browser
+    window.electron.openExternalLink(event.target.href); // Open link in external browser
   }
 });

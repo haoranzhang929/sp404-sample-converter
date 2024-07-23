@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, shell } = require("electron");
 const path = require("path");
 const fs = require("fs").promises;
 const ffmpeg = require("fluent-ffmpeg");
@@ -17,8 +17,7 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
-      nodeIntegration: true,
-      contextIsolation: false
+      nodeIntegration: false
     }
   });
 
@@ -35,6 +34,11 @@ app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
+});
+
+// Handle external link opening
+ipcMain.handle("open-external-link", (event, url) => {
+  shell.openExternal(url);
 });
 
 // IPC Handler to open the directory selection dialog
