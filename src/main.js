@@ -4,18 +4,9 @@ const fs = require("fs").promises;
 const ffmpeg = require("fluent-ffmpeg");
 const os = require("os");
 
-// Get paths to the ffmpeg and ffprobe binaries
-const getBinaryPath = (binaryName) => {
-  const appPath = app.getAppPath();
-  const binaryPath = path.join(appPath, "ffmpeg", binaryName);
-  // debug log
-  console.log(`${binaryName} path: ${binaryPath}`);
-  return binaryPath;
-};
-
 // Set the paths to ffmpeg and ffprobe
-ffmpeg.setFfmpegPath(getBinaryPath("ffmpeg"));
-ffmpeg.setFfprobePath(getBinaryPath("ffprobe"));
+ffmpeg.setFfmpegPath(`/Applications/sp404-sample-converter.app/Contents/Resources/ffmpeg`);
+ffmpeg.setFfprobePath(`/Applications/sp404-sample-converter.app/Contents/Resources/ffprobe/darwin/arm64/ffprobe`);
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
