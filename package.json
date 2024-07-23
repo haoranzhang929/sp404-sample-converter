@@ -35,6 +35,20 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "node_modules/ffmpeg-static/bin/",
+        "to": "ffmpeg/",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "node_modules/ffprobe-static/bin/",
+        "to": "ffprobe/",
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {

@@ -3,12 +3,19 @@ const path = require("path");
 const fs = require("fs").promises;
 const ffmpeg = require("fluent-ffmpeg");
 const os = require("os");
-const pathToFfmpeg = require("ffmpeg-static");
-const pathToFfprobe = require("ffprobe-static").path;
+
+// Get paths to the ffmpeg and ffprobe binaries
+const getBinaryPath = (binaryName) => {
+  const appPath = app.getAppPath();
+  const binaryPath = path.join(appPath, "ffmpeg", binaryName);
+  // debug log
+  console.log(`${binaryName} path: ${binaryPath}`);
+  return binaryPath;
+};
 
 // Set the paths to ffmpeg and ffprobe
-ffmpeg.setFfmpegPath(pathToFfmpeg);
-ffmpeg.setFfprobePath(pathToFfprobe);
+ffmpeg.setFfmpegPath(getBinaryPath("ffmpeg"));
+ffmpeg.setFfprobePath(getBinaryPath("ffprobe"));
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -17,14 +24,15 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      sandbox: true
     }
   });
 
   mainWindow.loadFile(path.join(__dirname, "index.html"));
 }
 
-app.on("ready", createWindow);
+app.whenReady().then(createWindow);
 
 app.on("window-all-closed", () => {
   app.quit();
@@ -52,6 +60,8 @@ ipcMain.handle("select-directory", async () => {
 // Helper function to process files
 async function processFile(filePath) {
   return new Promise((resolve, reject) => {
+    // debug log
+    console.log(`Processing file: ${filePath}`);
     ffmpeg.ffprobe(filePath, (err, probeData) => {
       if (err) {
         return reject(`[!!] Error probing ${path.basename(filePath)}: ${err.message}`);
@@ -87,27 +97,31 @@ ipcMain.handle("process-directory", async (event, directory) => {
   let finalMessageArr = [];
 
   async function diveInto(dir) {
-    const files = await fs.readdir(dir);
-    const tasks = files.map(async (filename) => {
-      const filePath = path.join(dir, filename);
+    try {
+      const files = await fs.readdir(dir);
+      const tasks = files.map(async (filename) => {
+        const filePath = path.join(dir, filename);
 
-      if ((await fs.stat(filePath)).isDirectory()) {
-        return diveInto(filePath);
-      }
+        if ((await fs.stat(filePath)).isDirectory()) {
+          return diveInto(filePath);
+        }
 
-      if (filename.startsWith("._") || !filename.toLowerCase().endsWith(".wav")) {
-        return; // Skip non-WAV files and Mac system files
-      }
+        if (filename.startsWith("._") || !filename.toLowerCase().endsWith(".wav")) {
+          return; // Skip non-WAV files and Mac system files
+        }
 
-      try {
-        const message = await processFile(filePath);
-        finalMessageArr.push(message);
-      } catch (error) {
-        finalMessageArr.push(error);
-      }
-    });
+        try {
+          const message = await processFile(filePath);
+          finalMessageArr.push(message);
+        } catch (error) {
+          finalMessageArr.push(error);
+        }
+      });
 
-    await Promise.all(tasks);
+      await Promise.all(tasks);
+    } catch (error) {
+      finalMessageArr.push(`[!!] Error reading directory: ${error.message}`);
+    }
   }
 
   try {
