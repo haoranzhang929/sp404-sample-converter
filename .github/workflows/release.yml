@@ -147,7 +147,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/sp404-sample-converter\ Setup\ 1.0.0.exe
+          asset_path: "./dist/sp404-sample-converter Setup 1.0.0.exe"
           asset_name: sp404-sample-converter-${{ github.run_number }}.exe
           asset_content_type: application/octet-stream
 
