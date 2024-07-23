@@ -1,13 +1,13 @@
 {
   "name": "sp404-sample-converter",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "",
   "main": "src/main.js",
   "scripts": {
     "start": "npm run build:css && electron .",
     "pack": "npm run build:css && electron-builder --dir",
     "dist": "npm run build:css && electron-builder",
-    "build:css": "tailwindcss build src/tailwind.css -o src/styles.css"
+    "build:css": "tailwindcss -i src/tailwind.css -o src/styles.css"
   },
   "build": {
     "appId": "com.haosc.sp404-sample-converter",
