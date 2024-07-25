@@ -4,9 +4,30 @@ const fs = require("fs").promises;
 const ffmpeg = require("fluent-ffmpeg");
 const os = require("os");
 
-// Set the paths to ffmpeg and ffprobe
-ffmpeg.setFfmpegPath(`/Applications/sp404-sample-converter.app/Contents/Resources/ffmpeg`);
-ffmpeg.setFfprobePath(`/Applications/sp404-sample-converter.app/Contents/Resources/ffprobe/darwin/arm64/ffprobe`);
+function getFFmpegPath() {
+  return path.join(app.getAppPath(), "resources", "ffmpeg");
+}
+
+function getFFprobePath() {
+  const platform = process.platform;
+  const arch = process.arch;
+  let ffprobePath;
+
+  if (platform === "darwin") {
+    ffprobePath = path.join(app.getAppPath(), "resources", "ffprobe", "darwin", arch, "ffprobe");
+  } else if (platform === "win32") {
+    ffprobePath = path.join(app.getAppPath(), "resources", "ffprobe", "win32", arch, "ffprobe.exe");
+  } else if (platform === "linux") {
+    ffprobePath = path.join(app.getAppPath(), "resources", "ffprobe", "linux", arch, "ffprobe");
+  } else {
+    throw new Error(`Unsupported platform: ${platform}`);
+  }
+
+  return ffprobePath;
+}
+
+ffmpeg.setFfmpegPath(getFFmpegPath());
+ffmpeg.setFfprobePath(getFFprobePath());
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
