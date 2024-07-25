@@ -32,14 +32,14 @@
     "extraResources": [
       {
         "from": "./node_modules/ffmpeg-static/ffmpeg",
-        "to": "resources/ffmpeg",
+        "to": "ffmpeg/",
         "filter": [
           "**/*"
         ]
       },
       {
         "from": "./node_modules/ffprobe-static/bin",
-        "to": "resources/ffprobe",
+        "to": "ffprobe/",
         "filter": [
           "**/*"
         ]

@@ -5,26 +5,33 @@ const ffmpeg = require("fluent-ffmpeg");
 const os = require("os");
 
 function getFFmpegPath() {
-  return path.join(app.getAppPath(), "resources", "ffmpeg");
+  if (!app.isPackaged) {
+    return require("ffmpeg-static");
+  }
+  return path.join(process.resourcesPath, "ffmpeg");
 }
 
 function getFFprobePath() {
+  if (!app.isPackaged) {
+    return require("ffprobe-static").path;
+  }
   const platform = process.platform;
   const arch = process.arch;
-  let ffprobePath;
 
   if (platform === "darwin") {
-    ffprobePath = path.join(app.getAppPath(), "resources", "ffprobe", "darwin", arch, "ffprobe");
+    return path.join(process.resourcesPath, "ffprobe", "darwin", arch, "ffprobe");
   } else if (platform === "win32") {
-    ffprobePath = path.join(app.getAppPath(), "resources", "ffprobe", "win32", arch, "ffprobe.exe");
+    return path.join(process.resourcesPath, "ffprobe", "win32", arch, "ffprobe.exe");
   } else if (platform === "linux") {
-    ffprobePath = path.join(app.getAppPath(), "resources", "ffprobe", "linux", arch, "ffprobe");
+    return path.join(process.resourcesPath, "ffprobe", "linux", arch, "ffprobe");
   } else {
     throw new Error(`Unsupported platform: ${platform}`);
   }
-
-  return ffprobePath;
 }
+
+// Add these console.logs for debugging
+console.log("FFmpeg path:", getFFmpegPath());
+console.log("FFprobe path:", getFFprobePath());
 
 ffmpeg.setFfmpegPath(getFFmpegPath());
 ffmpeg.setFfprobePath(getFFprobePath());
