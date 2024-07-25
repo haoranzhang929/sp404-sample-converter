@@ -54,7 +54,6 @@ async function processFile(filePath) {
   let finalMessage = "";
 
   try {
-    // debug log
     console.log(`Processing file: ${filePath}`);
 
     const probeData = await new Promise((resolve, reject) => {
@@ -88,25 +87,52 @@ async function processFile(filePath) {
   } catch (error) {
     finalMessage = `[!!] Error processing ${path.basename(filePath)}: ${error.message}`;
   } finally {
-    // Cleanup temporary file
     try {
+      await fs.access(tempFile);
       await fs.unlink(tempFile);
     } catch (cleanupErr) {
-      console.error(`[!!] Error deleting temporary file ${tempFile}: ${cleanupErr.message}`);
+      if (cleanupErr.code !== "ENOENT") {
+        console.error(`[!!] Error deleting temporary file ${tempFile}: ${cleanupErr.message}`);
+      }
     }
   }
 
   return finalMessage;
 }
 
+let isCancelled = false;
+
+ipcMain.handle("cancel-process", () => {
+  isCancelled = true;
+});
+
 // IPC Handler to process the selected directory
 ipcMain.handle("process-directory", async (event, directory) => {
   let finalMessageArr = [];
+  let totalFiles = 0;
+  let processedFiles = 0;
+  isCancelled = false;
+
+  async function countFiles(dir) {
+    const files = await fs.readdir(dir);
+    for (const file of files) {
+      const filePath = path.join(dir, file);
+      if ((await fs.stat(filePath)).isDirectory()) {
+        await countFiles(filePath);
+      } else if (file.toLowerCase().endsWith(".wav") && !file.startsWith("._")) {
+        totalFiles++;
+      }
+    }
+  }
+
+  await countFiles(directory);
 
   async function diveInto(dir) {
     try {
       const files = await fs.readdir(dir);
       const tasks = files.map(async (filename) => {
+        if (isCancelled) return;
+
         const filePath = path.join(dir, filename);
 
         if ((await fs.stat(filePath)).isDirectory()) {
@@ -114,12 +140,14 @@ ipcMain.handle("process-directory", async (event, directory) => {
         }
 
         if (filename.startsWith("._") || !filename.toLowerCase().endsWith(".wav")) {
-          return; // Skip non-WAV files and Mac system files
+          return;
         }
 
         try {
           const message = await processFile(filePath);
           finalMessageArr.push(message);
+          processedFiles++;
+          event.sender.send("progress-update", { current: processedFiles, total: totalFiles });
         } catch (error) {
           finalMessageArr.push(error);
         }
