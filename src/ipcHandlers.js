@@ -22,4 +22,4 @@ function setupIpcHandlers() {
   });
 }
 
-module.exports = setupIpcHandlers;
+module.exports = { setupIpcHandlers };

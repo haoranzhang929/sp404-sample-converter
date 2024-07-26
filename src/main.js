@@ -1,6 +1,6 @@
 const { app } = require("electron");
-const WindowManager = require("./windowManager");
-const setupIpcHandlers = require("./ipcHandlers");
+const { WindowManager } = require("./windowManager");
+const { setupIpcHandlers } = require("./ipcHandlers");
 const { setupFFmpeg } = require("./ffmpegConfig");
 
 setupFFmpeg();

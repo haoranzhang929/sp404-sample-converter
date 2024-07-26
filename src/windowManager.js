@@ -6,11 +6,13 @@ class WindowManager {
     const mainWindow = new BrowserWindow({
       width: 800,
       height: 600,
+      resizable: false,
       webPreferences: {
         preload: path.join(__dirname, "preload.js"),
         contextIsolation: true,
         nodeIntegration: false,
-        sandbox: true
+        sandbox: true,
+        devTools: false
       }
     });
 
@@ -22,4 +24,4 @@ class WindowManager {
   }
 }
 
-module.exports = WindowManager;
+module.exports = { WindowManager };
