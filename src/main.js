@@ -3,6 +3,7 @@ const path = require("path");
 const fs = require("fs").promises;
 const ffmpeg = require("fluent-ffmpeg");
 const os = require("os");
+const fse = require("fs-extra");
 
 function getFFmpegPath() {
   if (!app.isPackaged) {
@@ -110,7 +111,9 @@ async function processFile(filePath) {
         .run();
     });
 
-    await fs.rename(tempFile, filePath);
+    // Use fs-extra's move function instead of fs.rename
+    await fse.move(tempFile, filePath, { overwrite: true });
+
     finalMessage = `[+] Processed ${path.basename(filePath)}`;
   } catch (error) {
     finalMessage = `[!!] Error processing ${path.basename(filePath)}: ${error.message}`;
@@ -155,15 +158,36 @@ ipcMain.handle("process-directory", async (event, directory) => {
 
   await countFiles(directory);
 
+  async function isPathAccessible(path) {
+    try {
+      await fs.access(path, fs.constants.R_OK);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async function diveInto(dir) {
     try {
+      if (!(await isPathAccessible(dir))) {
+        finalMessageArr.push(`[!!] Cannot access directory: ${dir}`);
+        return;
+      }
+
       const files = await fs.readdir(dir);
       const tasks = files.map(async (filename) => {
         if (isCancelled) return;
 
         const filePath = path.join(dir, filename);
 
-        if ((await fs.stat(filePath)).isDirectory()) {
+        if (!(await isPathAccessible(filePath))) {
+          finalMessageArr.push(`[!!] Cannot access file: ${filePath}`);
+          return;
+        }
+
+        const stats = await fs.stat(filePath);
+
+        if (stats.isDirectory()) {
           return diveInto(filePath);
         }
 
@@ -177,13 +201,13 @@ ipcMain.handle("process-directory", async (event, directory) => {
           processedFiles++;
           event.sender.send("progress-update", { current: processedFiles, total: totalFiles });
         } catch (error) {
-          finalMessageArr.push(error);
+          finalMessageArr.push(`[!!] Error processing ${filePath}: ${error.message}`);
         }
       });
 
       await Promise.all(tasks);
     } catch (error) {
-      finalMessageArr.push(`[!!] Error reading directory: ${error.message}`);
+      finalMessageArr.push(`[!!] Error reading directory ${dir}: ${error.message}`);
     }
   }
 
