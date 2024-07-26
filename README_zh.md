@@ -9,7 +9,7 @@
 
 ## 支持的平台
 
-SP-404 MK2 采样转换器支持**macOS**和**Windows**。
+SP-404 MK2 采样转换器支持**macOS**，**Windows**和**Linux**。
 
 ## 概述
 

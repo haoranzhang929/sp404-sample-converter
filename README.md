@@ -9,7 +9,7 @@ An Electron app to convert WAV files to 16-bit, 48kHz format – the format supp
 
 ## Supported Platforms
 
-The SP-404 MK2 Sample Converter is available for **macOS** & **Windows**.
+The SP-404 MK2 Sample Converter is available for **macOS**, **Windows** & **Linux**.
 
 ## Overview
 
