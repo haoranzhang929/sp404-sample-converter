@@ -3,9 +3,11 @@ const fs = require("fs").promises;
 const ffmpeg = require("fluent-ffmpeg");
 const os = require("os");
 const fse = require("fs-extra");
+const crypto = require("crypto");
 
 async function processFile(filePath) {
-  const tempFile = path.join(os.tmpdir(), path.basename(filePath));
+  const tempFileName = `temp_${crypto.randomBytes(16).toString("hex")}.wav`;
+  const tempFile = path.join(os.tmpdir(), tempFileName);
   let finalMessage = "";
 
   try {
@@ -18,7 +20,11 @@ async function processFile(filePath) {
       });
     });
 
-    const audioInfo = probeData.streams[0];
+    const audioInfo = probeData.streams.find(stream => stream.codec_type === 'audio');
+    if (!audioInfo) {
+      throw new Error("No audio stream found");
+    }
+
     const codec_name = audioInfo.codec_name;
     const sample_rate = audioInfo.sample_rate.toString();
 
@@ -29,11 +35,17 @@ async function processFile(filePath) {
 
     await new Promise((resolve, reject) => {
       ffmpeg(filePath)
+        .inputOptions(["-y"])
+        .outputOptions(["-c:a pcm_s16le", "-ar 48000", "-f wav"])
         .output(tempFile)
-        .audioCodec("pcm_s16le")
-        .audioFrequency(48000)
+        .on("start", (commandLine) => {
+          console.log("Spawned FFmpeg with command: " + commandLine);
+        })
         .on("end", () => resolve())
-        .on("error", (err) => reject(err))
+        .on("error", (err, stdout, stderr) => {
+          console.error("FFmpeg stderr:", stderr);
+          reject(new Error(`FFmpeg error: ${err.message}`));
+        })
         .run();
     });
 
@@ -66,7 +78,8 @@ async function processDirectory(event, directory) {
     const files = await fs.readdir(dir);
     for (const file of files) {
       const filePath = path.join(dir, file);
-      if ((await fs.stat(filePath)).isDirectory()) {
+      const stats = await fs.stat(filePath);
+      if (stats.isDirectory()) {
         await countFiles(filePath);
       } else if (file.toLowerCase().endsWith(".wav") && !file.startsWith("._")) {
         totalFiles++;
@@ -78,7 +91,7 @@ async function processDirectory(event, directory) {
 
   async function isPathAccessible(path) {
     try {
-      await fs.access(path, fs.constants.R_OK);
+      await fs.access(path, fs.constants.R_OK | fs.constants.W_OK);
       return true;
     } catch {
       return false;
@@ -93,24 +106,25 @@ async function processDirectory(event, directory) {
       }
 
       const files = await fs.readdir(dir);
-      const tasks = files.map(async (filename) => {
-        if (global.isCancelled) return;
+      for (const filename of files) {
+        if (global.isCancelled) break;
 
         const filePath = path.join(dir, filename);
 
         if (!(await isPathAccessible(filePath))) {
           finalMessageArr.push(`[!!] Cannot access file: ${filePath}`);
-          return;
+          continue;
         }
 
         const stats = await fs.stat(filePath);
 
         if (stats.isDirectory()) {
-          return diveInto(filePath);
+          await diveInto(filePath);
+          continue;
         }
 
         if (filename.startsWith("._") || !filename.toLowerCase().endsWith(".wav")) {
-          return;
+          continue;
         }
 
         try {
@@ -121,9 +135,7 @@ async function processDirectory(event, directory) {
         } catch (error) {
           finalMessageArr.push(`[!!] Error processing ${filePath}: ${error.message}`);
         }
-      });
-
-      await Promise.all(tasks);
+      }
     } catch (error) {
       finalMessageArr.push(`[!!] Error reading directory ${dir}: ${error.message}`);
     }
