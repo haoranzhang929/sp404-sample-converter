@@ -10,7 +10,7 @@ async function getFFmpegPath() {
 
   const platform = process.platform;
   const ffmpegName = platform === "win32" ? "ffmpeg.exe" : "ffmpeg";
-  const ffmpegPath = path.join(process.resourcesPath, ffmpegName);
+  const ffmpegPath = path.join(process.resourcesPath, "ffmpeg", ffmpegName);
 
   try {
     await fs.access(ffmpegPath, fs.constants.F_OK);
